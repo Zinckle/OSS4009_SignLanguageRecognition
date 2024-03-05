@@ -4,6 +4,27 @@ from tensorflow.keras.datasets import mnist
 from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 from matplotlib import pyplot
+import csv
+
+test_data = "Dataset/sign_mnist_test/sign_mnist_test.csv"
+train_data = "Dataset/sign_mnist_train/sign_mnist_train.csv"
+
+testLabels = []
+testData = []
+with open(test_data, newline='') as csvfile:
+    reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+
+    for row in reader:
+        print(row[0])
+        rowData = row[0].split(",")
+        testLabels.append(rowData[0])
+        index = 1
+
+        for i in range(28):
+            testData.append(rowData[1+((index-1)*28):1+(index*28)])
+            index += 1
+
+
 
 # Load and preprocess the MNIST dataset
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
