@@ -1,4 +1,4 @@
-import numpy as np
+""""import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 import cv2
@@ -122,3 +122,4 @@ loss, acc = model.evaluate(testData, testLabels, verbose=2)
 print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
 
 preview(threshold=0.7)
+"""""

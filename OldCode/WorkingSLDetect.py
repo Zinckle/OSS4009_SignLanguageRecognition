@@ -6,8 +6,8 @@ from rembg import remove
 
 
 
-train = pd.read_csv('Dataset/sign_mnist_train/sign_mnist_train.csv')
-test = pd.read_csv('Dataset/sign_mnist_test/sign_mnist_test.csv')
+train = pd.read_csv('../Dataset/sign_mnist_train/sign_mnist_train.csv')
+test = pd.read_csv('../Dataset/sign_mnist_test/sign_mnist_test.csv')
 
 train.head()
 
