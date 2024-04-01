@@ -3,13 +3,6 @@ import mediapipe as mp
 import time
 import math
 import numpy as np
-from rembg import remove
-from keras.datasets import mnist
-from keras.src.utils import img_to_array
-from tensorflow.keras.utils import to_categorical
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Dense, Flatten
 import tensorflow as tf
 
 
@@ -147,11 +140,6 @@ while True:
             mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)
 
             outlier = greatest_outlier(pointArray)
-            if(outlier == pointer):
-                print("finger")
-            if (outlier == pinky):
-                print("pinky")
-
     top_left, bottom_right = make_square((g_x, g_y), (l_x, l_y))
     roi = extract_region(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])))
 
@@ -162,7 +150,7 @@ while True:
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
         cv2.imshow("test", roi)
-        roi = roi[:, :, 1] / 255.0
+        roi = roi[:, :] / 255.0
         roi = roi.reshape(1, 28, 28, 1)
         predict_x = model1.predict(roi, 1, verbose=0)
         result = np.argmax(predict_x, axis=1)
@@ -174,10 +162,15 @@ while True:
         start_time = time.time()
 
     if (time.time() - start_time > 1.5 and (time.time() - start_time != time.time())):
+        cv2.imshow("ove", overlay)
         overlayROI = cv2.resize(overlay, (28, 28), interpolation=cv2.INTER_AREA)
-
+        #overlayROI = np.rot90(overlayROI)
+        #overlayROI = np.rot90(overlayROI)
+        cv2.imshow("overlay", overlayROI)
         img_array = overlayROI[:, :, 1] / 255.0  # Normalize pixel values to be between 0 and 1
-        reshaped_array = np.expand_dims(np.expand_dims(img_array, axis=0), axis=-1)
+        reshaped_array = img_array .reshape(1, 28, 28, 1)
+
+        #cv2.imshow("overlay", reshaped_array)
         y = model.predict(reshaped_array)
         print(np.argmax(y[0]))
         print(letters[np.argmax(y[0])])
