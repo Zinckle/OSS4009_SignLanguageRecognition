@@ -3,7 +3,7 @@ import mediapipe as mp
 import time
 import math
 import numpy as np
-
+from rembg import remove
 from keras.datasets import mnist
 from keras.src.utils import img_to_array
 from tensorflow.keras.utils import to_categorical
@@ -32,8 +32,8 @@ def make_square(point1, point2):
     mid = midpoint(point1, point2)
 
     # Calculate the coordinates of the top-left and bottom-right points of the square
-    top_left = (mid[0] - side_length / 2, mid[1] - side_length / 2)
-    bottom_right = (mid[0] + side_length / 2, mid[1] + side_length / 2)
+    top_left = ((mid[0] - side_length / 2) * 0.9, (mid[1] - side_length / 2) * 0.95)
+    bottom_right = ((mid[0] + side_length / 2) * 1.1, (mid[1] + side_length / 2) * 1.05)
 
     return top_left, bottom_right
 
@@ -52,6 +52,7 @@ def extract_region(image, point1, point2):
 
 
 def getLetter(result):
+    result += 1
     try:
         if result > 8:
             result += 1
@@ -61,13 +62,38 @@ def getLetter(result):
         return "Error"
 
 
-model = tf.keras.models.load_model('numberDetect.h5')
-model1 = tf.keras.models.load_model('sign_minst_cnn_50_Epochs.h5')
-cap = cv2.VideoCapture(0)
+def greatest_outlier(points):
+    if len(points) < 3:
+        return None  # Cannot calculate outlier for less than 3 points
+    max_distance = 0
+    outlier = None
+    for i in range(len(points)):
+        distances = []
+        for j in range(len(points)):
+            if i != j:
+                distances.append(distance(points[i], points[j]))
+        median_distance = sorted(distances)[len(distances) // 2]
+        if median_distance > max_distance:
+            max_distance = median_distance
+            outlier = points[i]
+    return outlier
 
+
+model = tf.keras.models.load_model('lmnist.h5')
+model1 = tf.keras.models.load_model('smnist.h5')
+cap = cv2.VideoCapture(0)
+letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+           'U', 'V', 'W', 'X', 'Y', 'Z']
+
+#letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+#           'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+#           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+#           'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'd', 'e',
+#           'f', 'g', 'h', 'n', 'q', 'r', 't']
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(static_image_mode=False,
-                      max_num_hands=2,
+                      max_num_hands=1,
                       min_detection_confidence=0.5,
                       min_tracking_confidence=0.5)
 mpDraw = mp.solutions.drawing_utils
@@ -84,12 +110,14 @@ while True:
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = hands.process(imgRGB)
     # print(results.multi_hand_landmarks)
-    thumb = []
+    pinky = []
     pointer = []
 
     g_x, g_y, l_x, l_y = 0, 0, 0, 0
-
+    pointArray = []
+    outlier = [0,0]
     if results.multi_hand_landmarks:
+
         for handLms in results.multi_hand_landmarks:
             for id, lm in enumerate(handLms.landmark):
                 # print(id,lm)
@@ -106,55 +134,61 @@ while True:
                     g_y = g_y if g_y > cy else cy
                     l_x = l_x if l_x < cx else cx
                     l_y = l_y if l_y < cy else cy
+                    #make point array here so we dont include id=0 as it is often the default outlier
+                    pointArray.append((cx, cy))
 
-                cv2.circle(img, (cx, cy), 3, (255, 0, 255), cv2.FILLED)
-                if id == 4:
+                if id == 20:
                     cv2.circle(img, (cx, cy), 7, (255, 0, 0), cv2.FILLED)
-                    thumb = [cx, cy]
+                    pinky = (cx, cy)
                 elif id == 8:
                     cv2.circle(img, (cx, cy), 7, (0, 255, 0), cv2.FILLED)
-                    pointer = [cx, cy]
+                    pointer = (cx, cy)
 
             mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)
 
-    top_left, bottom_right = make_square((g_x, g_y), (l_x, l_y))
+            outlier = greatest_outlier(pointArray)
+            if(outlier == pointer):
+                print("finger")
+            if (outlier == pinky):
+                print("pinky")
 
+    top_left, bottom_right = make_square((g_x, g_y), (l_x, l_y))
     roi = extract_region(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])))
 
     if roi.any():
-        # cv2.rectangle(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])),(0, 0, 255), 5)
+        cv2.rectangle(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])),(0, 0, 255), 5)
+        # roi = remove(roi)
         cv2.imshow("test", roi)
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
-        # cv2.imshow("test", roi)
+        cv2.imshow("test", roi)
+        roi = roi[:, :, 1] / 255.0
         roi = roi.reshape(1, 28, 28, 1)
         predict_x = model1.predict(roi, 1, verbose=0)
-        print("predict_x: ", predict_x)
         result = np.argmax(predict_x, axis=1)
-        print("result: ", result)
-        cv2.putText(img, getLetter(result), (300, 100), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2)
+        cv2.putText(img, getLetter(result), (10, 100), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 255, 0), 2)
 
-    if ((math.dist(thumb, pointer)) > 50) and False:
-        cv2.circle(overlay, (pointer[0], pointer[1]), 15, (255, 255, 255), cv2.FILLED)
+    if ((outlier == pointer) or (outlier == pinky)):
+        cv2.circle(overlay, (outlier[0], outlier[1]), 15, (255, 255, 255), cv2.FILLED)
         # cv2.imshow("overlay", overlay)
         start_time = time.time()
 
-    if (time.time() - start_time > 1.5 and (time.time() - start_time != time.time()) and False):
-        roi = cv2.resize(overlay, (28, 28), interpolation=cv2.INTER_AREA)
+    if (time.time() - start_time > 1.5 and (time.time() - start_time != time.time())):
+        overlayROI = cv2.resize(overlay, (28, 28), interpolation=cv2.INTER_AREA)
 
-        img_array = roi[:, :, 1] / 255.0  # Normalize pixel values to be between 0 and 1
+        img_array = overlayROI[:, :, 1] / 255.0  # Normalize pixel values to be between 0 and 1
         reshaped_array = np.expand_dims(np.expand_dims(img_array, axis=0), axis=-1)
         y = model.predict(reshaped_array)
         print(np.argmax(y[0]))
+        print(letters[np.argmax(y[0])])
         overlay = np.zeros([480, 640, 3], dtype=np.uint8)
         start_time = 0
-        cv2.putText(overlay, str(np.argmax(y[0])), (300, 300), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+        cv2.putText(overlay, str(letters[np.argmax(y[0])]), (10, 150), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 3)
 
     cTime = time.time()
     fps = 1 / (cTime - pTime)
     pTime = cTime
-
-    cv2.putText(img, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+    cv2.putText(img, str(int(fps)), (10, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
 
     # cv2.imshow("overlay", overlay)
     added_image = cv2.addWeighted(img, 1, overlay, 1, 0)
