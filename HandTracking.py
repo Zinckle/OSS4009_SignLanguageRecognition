@@ -52,14 +52,10 @@ def extract_region(image, point1, point2):
 
 
 def getLetter(result):
-    result += 1
-    try:
-        if result > 8:
-            result += 1
-        output = chr(96 + result[0])
-        return output
-    except:
-        return "Error"
+    signLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+           'U', 'V', 'W', 'X', 'Y']
+    return signLetters[result[0]]
 
 
 def greatest_outlier(points):
@@ -156,13 +152,13 @@ while True:
     roi = extract_region(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])))
 
     if roi.any():
-        cv2.rectangle(readImg, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])),(0, 0, 255), 5)
+        cv2.rectangle(img, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])),(0, 0, 255), 5)
         # roi = remove(roi)
         cv2.imshow("test", roi)
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
         cv2.imshow("test", roi)
-        roi = roi[:, :, 1] / 255.0
+        roi = roi/ 255.0
         roi = roi.reshape(1, 28, 28, 1)
         predict_x = model1.predict(roi, 1, verbose=0)
         result = np.argmax(predict_x, axis=1)
