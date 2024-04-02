@@ -142,9 +142,11 @@ while True:
     if roi.any():
         cv2.rectangle(img, (int(top_left[0]), int(top_left[1])), (int(bottom_right[0]), int(bottom_right[1])),(0, 0, 255), 5)
         # roi = remove(roi)
-        cv2.imshow("test", roi)
+
         roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+       # roi = cv2.flip(overlayROI, 1)
+        #roi = np.rot90(overlayROI)
         cv2.imshow("test", roi)
         roi = roi[:, :] / 255.0
         roi = roi.reshape(1, 28, 28, 1)
@@ -160,7 +162,8 @@ while True:
     if (time.time() - start_time > 1.5 and (time.time() - start_time != time.time())):
         cv2.imshow("ove", overlay)
         overlayROI = cv2.resize(overlay, (28, 28), interpolation=cv2.INTER_AREA)
-        #overlayROI = np.rot90(overlayROI)
+        overlayROI = cv2.flip(overlayROI, 1)
+        overlayROI = np.rot90(overlayROI)
         #overlayROI = np.rot90(overlayROI)
         cv2.imshow("overlay", overlayROI)
         img_array = overlayROI[:, :, 1] / 255.0  # Normalize pixel values to be between 0 and 1
