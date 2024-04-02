@@ -160,7 +160,7 @@ while True:
         start_time = time.time()
 
     if (time.time() - start_time > 1.5 and (time.time() - start_time != time.time())):
-        cv2.imshow("ove", overlay)
+        #cv2.imshow("ove", overlay)
         overlayROI = cv2.resize(overlay, (28, 28), interpolation=cv2.INTER_AREA)
         overlayROI = cv2.flip(overlayROI, 1)
         overlayROI = np.rot90(overlayROI)
