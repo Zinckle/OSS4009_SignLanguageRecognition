@@ -1,20 +1,21 @@
-import cv2
-import mediapipe as mp
-import time
-import math
-import numpy as np
-from rembg import remove
-from keras.datasets import mnist
-from keras.src.utils import img_to_array
-from tensorflow.keras.utils import to_categorical
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Dense, Flatten
-import tensorflow as tf
+
+from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import model_to_dot
 import visualkeras
 
-model1 = tf.keras.models.load_model('smnist.h5')
+# Load the model from the .h5 file
+model = load_model("../smnist.h5")
 
-visualkeras.layered_view(model1).show() # display using your system viewer
+from tensorflow.python.keras.layers import Dense, Conv2D, Flatten, Dropout, MaxPooling2D, ZeroPadding2D
+from collections import defaultdict
 
-visualkeras.layered_view(model1, to_file='output.png') # write to disk
+from tensorflow.keras import layers
+from collections import defaultdict
+color_map = defaultdict(dict)
+color_map[layers.Conv2D]['fill'] = '#ff006d'
+color_map[layers.MaxPooling2D]['fill'] = '#ffdd00'
+color_map[layers.Dropout]['fill'] = '#ff7d00'
+color_map[layers.Dense]['fill'] = '#01befe'
+color_map[layers.Flatten]['fill'] = '#adff02'
+color_map[layers.BatchNormalization]['fill'] = '#8f00ff'
+visualkeras.layered_view(model, color_map=color_map, to_file='output.png').show()
