@@ -32,7 +32,7 @@ model1 = tf.keras.models.load_model('../smnist.h5')
 preds_probs = model1.predict(x_test)
 preds = np.argmax(preds_probs, axis=1)  # Find the class with the highest probability for each prediction
 print("Accuracy: ", accuracy_score(np.argmax(y_test, axis=1), preds))
-
+print(model1.metrics)
 cf_matrix = confusion_matrix(np.argmax(y_test, axis=1), preds)
 
 # Replace axis labels with SMNIST equivalent
