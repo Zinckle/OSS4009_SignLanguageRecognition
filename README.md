@@ -8,7 +8,11 @@ This projects presents the development of a Sign Language Recognition System uti
 
 
 ## How It Works
+The needed datasets can be downloaded from here:
+https://www.kaggle.com/datasets/datamunge/sign-language-mnist
+https://www.kaggle.com/datasets/crawford/emnist
 
+For EMNSIT, Use only the training data from the letter version
 ### CNN Training Set Up
 When training the convolutional neural networks using TrainLetterDetect.py or TrainSLD.py, start by ensuring that the following libraries are installed:
   - matplotlib
